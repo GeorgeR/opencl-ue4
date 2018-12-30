@@ -1,5 +1,3 @@
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
-
 using System.IO;
 
 namespace UnrealBuildTool.Rules
@@ -13,18 +11,31 @@ namespace UnrealBuildTool.Rules
 
         private string ThirdPartyPath
         {
-            get { return Path.GetFullPath(Path.Combine(ModulePath, "../../ThirdParty/")); }
+            get { return Path.GetFullPath(Path.Combine(ModuleDirectory, "../../ThirdParty/")); }
         }
 
         public OpenCL(ReadOnlyTargetRules Target) : base(Target)
         {
-            //PCHUsage = PCHUsageMode.NoSharedPCHs;
             PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-            PublicIncludePaths.AddRange(new string[] {
-                "OpenCL/Public",
-                Path.Combine(ThirdPartyPath, "OpenCL", "Include")
-            });
+            var IncludePath = Path.Combine(ThirdPartyPath, "OpenCL", "Include");
+
+            if(!Directory.Exists(IncludePath))
+                throw new DirectoryNotFoundException(IncludePath);
+
+            if (Target.Version.MinorVersion <= 19)
+            {
+                PublicIncludePaths.AddRange(
+                    new string[] {
+                        "OpenCL/Public",
+                        IncludePath
+                });
+            }
+
+            PublicIncludePaths.AddRange(
+                new string[] {
+                    IncludePath
+                });
 
             PublicDependencyModuleNames.AddRange(
                 new string[]
@@ -35,14 +46,15 @@ namespace UnrealBuildTool.Rules
                     "RenderCore",
                     "ShaderCore",
                     "RHI"
-                }
-                );
+                });
 
             string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64) ? "Win64" : "Win32";
             string OpenCLLibrariesPath = Path.Combine(ThirdPartyPath, "OpenCL", "Lib");
+
             string NvidiaLibrariesPath = Path.Combine(OpenCLLibrariesPath, "NVIDIA", PlatformString);
             string IntelLibrariesPath = Path.Combine(OpenCLLibrariesPath, "Intel", PlatformString);
             string AmdLibrariesPath = Path.Combine(OpenCLLibrariesPath, "AMD", PlatformString);
+
             if (Target.Platform == UnrealTargetPlatform.Win64 || Target.Platform == UnrealTargetPlatform.Win32)
             {
                 PublicAdditionalLibraries.Add(Path.Combine(NvidiaLibrariesPath, "OpenCL.lib"));
@@ -53,7 +65,8 @@ namespace UnrealBuildTool.Rules
             {
                 PublicAdditionalFrameworks.Add(new UEBuildFramework("OpenCL"));
             }
-            //Todo: add linux support
+
+            // TODO: add linux support
         }
     }
 }
