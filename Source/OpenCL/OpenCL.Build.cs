@@ -48,6 +48,16 @@ namespace UnrealBuildTool.Rules
                     "RHI"
                 });
 
+            if (Target.bBuildEditor == true)
+            {
+                PublicDependencyModuleNames.AddRange(
+                    new string[]
+                    {
+                        "DirectoryWatcher"
+                    }
+                );
+            }
+
             string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64) ? "Win64" : "Win32";
             string OpenCLLibrariesPath = Path.Combine(ThirdPartyPath, "OpenCL", "Lib");
 

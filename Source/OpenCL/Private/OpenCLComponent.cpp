@@ -7,59 +7,20 @@ UOpenCLComponent::UOpenCLComponent(const FObjectInitializer &init) : UActorCompo
 {
 	bWantsInitializeComponent = true;
 	bAutoActivate = true;
+
+#if WITH_EDITORONLY_DATA
 	bWatchKernelsFolderOnStartup = true;
 	WatchedDiskReadDelay = 0.05f;
 	WatchedNotificationLockout = 0.5f;
+#endif
 
 	DeviceGroup = EnumerateDevices();
 }
 
+#if WITH_EDITOR
 bool UOpenCLComponent::IsWatchingFolders()
 {
 	return WatchedFolders.Num() > 0;
-}
-
-bool UOpenCLComponent::HasValidHardware()
-{
-	TArray<FOpenCLDeviceData> Devices = EnumerateDevices();
-	IOpenCLPlugin::Get().EnumerateDevices(Devices);
-	return Devices.Num() > 0;
-}
-
-TArray<FOpenCLDeviceData> UOpenCLComponent::EnumerateDevices()
-{
-	TArray<FOpenCLDeviceData> Devices;
-	if (IOpenCLPlugin::Get().IsAvailable())
-	{
-		IOpenCLPlugin::Get().EnumerateDevices(Devices);
-	}
-	return Devices;
-}
-
-bool UOpenCLComponent::ReadKernelFromFile(const FString& FilePath, FString& OutKernelSource, bool bIsContentRelative /*= true*/)
-{
-	FString AbsolutePath;
-	if (bIsContentRelative)
-	{
-		AbsolutePath = FPaths::ProjectContentDir() + FilePath;
-	}
-	else
-	{
-		AbsolutePath = FilePath;
-	}
-
-	return FFileHelper::LoadFileToString(OutKernelSource, *AbsolutePath);
-}
-
-void UOpenCLComponent::RunOpenCLKernel(const FString& Kernel, const FString& KernelName /*= TEXT("main")*/, const FString& InputArgs /*= TEXT("")*/)
-{
-	if (IOpenCLPlugin::Get().IsAvailable())
-	{
-		IOpenCLPlugin::Get().RunKernelOnDevices(Kernel, KernelName, InputArgs, [this](const FString& Result, bool Success)
-		{
-			OnResult.Broadcast(Result, Success);
-		}, DeviceGroup);
-	}
 }
 
 void UOpenCLComponent::WatchKernelFolder(const FString& ProjectRelativeFolder)
@@ -120,27 +81,75 @@ void UOpenCLComponent::UnwatchKernelFolder(const FString& ProjectRelativeFolder)
 		UE_LOG(LogOpenCL, Log, TEXT("UnwatchKernelFolder:: %s folder doesn't exist."), *AbsolutePath);
 	}
 }
+#endif
+
+bool UOpenCLComponent::HasValidHardware()
+{
+	TArray<FOpenCLDeviceData> Devices = EnumerateDevices();
+	IOpenCLPlugin::Get().EnumerateDevices(Devices);
+	return Devices.Num() > 0;
+}
+
+TArray<FOpenCLDeviceData> UOpenCLComponent::EnumerateDevices()
+{
+	TArray<FOpenCLDeviceData> Devices;
+	if (IOpenCLPlugin::Get().IsAvailable())
+	{
+		IOpenCLPlugin::Get().EnumerateDevices(Devices);
+	}
+	return Devices;
+}
+
+bool UOpenCLComponent::ReadKernelFromFile(const FString& FilePath, FString& OutKernelSource, bool bIsContentRelative /*= true*/)
+{
+	FString AbsolutePath;
+	if (bIsContentRelative)
+	{
+		AbsolutePath = FPaths::ProjectContentDir() + FilePath;
+	}
+	else
+	{
+		AbsolutePath = FilePath;
+	}
+
+	return FFileHelper::LoadFileToString(OutKernelSource, *AbsolutePath);
+}
+
+void UOpenCLComponent::RunOpenCLKernel(const FString& Kernel, const FString& KernelName /*= TEXT("main")*/, const FString& InputArgs /*= TEXT("")*/)
+{
+	if (IOpenCLPlugin::Get().IsAvailable())
+	{
+		IOpenCLPlugin::Get().RunKernelOnDevices(Kernel, KernelName, InputArgs, [this](const FString& Result, bool Success)
+		{
+			OnResult.Broadcast(Result, Success);
+		}, DeviceGroup);
+	}
+}
 
 void UOpenCLComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 	DeviceGroup = EnumerateDevices();
 
+#if WITH_EDITOR
 	LastWatchEventCall = FDateTime::Now();
 	UWorld* World = GEngine->GetWorldFromContextObject(this, EGetWorldErrorMode::LogAndReturnNull);
 	if (bWatchKernelsFolderOnStartup && World->IsGameWorld())
 	{
 		WatchKernelFolder();
 	}
-	
+#endif
 }
 
 void UOpenCLComponent::UninitializeComponent()
-{	
+{
+#if WITH_EDITOR
 	TArray<FString> AllWatched = WatchedFolders;
 	for (auto Folder : AllWatched)
 	{
 		UnwatchKernelFolder(Folder);
 	}
+#endif
+
 	Super::UninitializeComponent();
 }
