@@ -44,9 +44,17 @@ namespace UnrealBuildTool.Rules
                     "CoreUObject",
                     "Engine",
                     "RenderCore",
-                    "ShaderCore",
                     "RHI"
                 });
+
+            if (Target.Version.MinorVersion <= 21)
+            {
+                PublicDependencyModuleNames.AddRange(
+                    new string[]
+                    {
+                        "ShaderCore",
+                    });
+            }
 
             if (Target.bBuildEditor == true)
             {
@@ -71,10 +79,10 @@ namespace UnrealBuildTool.Rules
                 PublicAdditionalLibraries.Add(Path.Combine(IntelLibrariesPath, "OpenCL.lib"));
                 PublicAdditionalLibraries.Add(Path.Combine(AmdLibrariesPath, "OpenCL.lib"));
             }
-            else if (Target.Platform == UnrealTargetPlatform.Mac)
-            {
-                PublicAdditionalFrameworks.Add(new UEBuildFramework("OpenCL"));
-            }
+            //else if (Target.Platform == UnrealTargetPlatform.Mac)
+            //{
+            //    PublicAdditionalFrameworks.Add(new UEBuildFramework("OpenCL"));
+            //}
 
             // TODO: add linux support
         }
