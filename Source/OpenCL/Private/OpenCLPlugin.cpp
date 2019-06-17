@@ -63,7 +63,10 @@ void OpenCLPlugin::EnumerateDevices(TArray<FOpenCLDeviceData>& OutDevices, bool 
 	cl_uint NumPlatforms;
 	cl_platform_id* Platforms;
 	cl_uint NumDevices;
+#pragma warning(push)
+#pragma warning(disable: 4458)
 	cl_device_id* Devices;
+#pragma warning(pop)
 	cl_uint MaxComputeUnits;
 
 	clGetPlatformIDs(0, NULL, &NumPlatforms);
@@ -162,8 +165,12 @@ void OpenCLPlugin::RunKernelOnDevices(const FString& KernelString, const FString
 	Context = clCreateContext(NULL, 1, &DeviceId, NULL, NULL, &Ret);
 
 	/* Create Command Queue */
+#if (CL_TARGET_OPENCL_VERSION < 200)
 	CommandQueue = clCreateCommandQueue(Context, DeviceId, 0, &Ret);
-
+#else
+	CommandQueue = clCreateCommandQueueWithProperties(Context, DeviceId, nullptr, &Ret);
+#endif
+	
 	/* Create Memory Buffer */
 	MemObj = clCreateBuffer(Context, CL_MEM_READ_WRITE, MemSize * sizeof(char), NULL, &Ret);
 
@@ -224,7 +231,12 @@ void OpenCLPlugin::RunKernelOnDevices(const FString& KernelString, const FString
 	Ret = clSetKernelArg(Kernel, 0, sizeof(cl_mem), (void *)&MemObj);
 
 	/* Execute OpenCL Kernel */
+#if (CL_TARGET_OPENCL_VERSION < 200)
 	Ret = clEnqueueTask(CommandQueue, Kernel, 0, NULL, NULL);
+#else
+	TArray<size_t> WorkSizes{ 1 };
+	Ret = clEnqueueNDRangeKernel(CommandQueue, Kernel, 1, nullptr, WorkSizes.GetData(), WorkSizes.GetData(), 0, nullptr, nullptr);
+#endif
 
 	/* Copy results from the memory buffer */
 	char ReturnString[MemSize];
