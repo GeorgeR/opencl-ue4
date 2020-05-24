@@ -2,19 +2,18 @@
 
 #pragma once
 
-#include "ModuleManager.h"
-#include "OCLData.h"
+#include "Modules/ModuleManager.h"
 
+#include "OCLData.h"
 
 /**
  * The public interface to this module.  In most cases, this interface is only public to sibling modules
  * within this plugin.
  */
-class IOpenCLPlugin : public IModuleInterface
+class IOpenCLPlugin
+    : public IModuleInterface
 {
-
 public:
-
 	/**
 	 * Singleton-like access to this module's interface.  This is just for convenience!
 	 * Beware of calling this during the shutdown phase, though.  Your module might have been unloaded already.
@@ -46,4 +45,3 @@ public:
 };
 
 DECLARE_LOG_CATEGORY_EXTERN(LogOpenCL, Log, All);
-

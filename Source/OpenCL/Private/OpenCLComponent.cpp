@@ -1,6 +1,6 @@
 #include "OpenCLComponent.h"
 #include "EngineMinimal.h"
-#include "Async.h"
+#include "Async/Async.h"
 #include "IOpenCLPlugin.h"
 
 UOpenCLComponent::UOpenCLComponent(const FObjectInitializer &init) : UActorComponent(init)

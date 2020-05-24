@@ -1,6 +1,6 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 #include "IOpenCLPlugin.h"
 #include "CL/opencl.h"
 #include "OCLUtility.h"
